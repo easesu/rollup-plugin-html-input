@@ -1,0 +1,20 @@
+{
+  "name": "rollup-plugin-html-input",
+  "version": "0.0.1",
+  "description": "Rollup plugin to use HTML files as input",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "easesu <easesu@outlook.com>",
+  "license": "GNU",
+  "devDependencies": {
+    "fs-extra": "^8.0.1",
+    "mocha": "^6.1.4",
+    "rollup": "^1.13.1"
+  },
+  "dependencies": {
+    "domutils": "^1.7.0",
+    "htmlparser2": "^3.10.1"
+  }
+}
