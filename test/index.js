@@ -82,7 +82,7 @@ describe('html entry', () => {
             }))
             .then(result => {
                 const outputCode = result.output[0].code;
-                assert.ok(outputCode.indexOf(firstHtmlPart) !== -1);
+                assert.ok(outputCode.indexOf(firstHtmlPart) === 0);
                 assert.ok(outputCode.indexOf(secondHtmlPart) !== -1);
                 assert.ok(outputCode.indexOf(inlineScriptContent) !== -1);
                 assert.ok(outputCode.indexOf(externalScriptContent) === -1);
@@ -101,7 +101,7 @@ describe('html entry', () => {
             }))
             .then(result => {
                 const outputCode = result.output[0].code;
-                assert.ok(outputCode.indexOf(firstHtmlPart) !== -1);
+                assert.ok(outputCode.indexOf(firstHtmlPart) === 0);
                 assert.ok(outputCode.indexOf(secondHtmlPart) !== -1);
                 assert.ok(outputCode.indexOf(inlineScriptContent) === -1);
                 assert.ok(outputCode.indexOf(externalScriptContent) !== -1);
@@ -120,10 +120,14 @@ describe('html entry', () => {
             }))
             .then(result => {
                 const outputCode = result.output[0].code;
-                assert.ok(outputCode.indexOf(firstHtmlPart) !== -1);
+                const inlineScriptContentStart = outputCode.indexOf(inlineScriptContent);
+                const externalScriptContentStart = outputCode.indexOf(externalScriptContent);
+
+                assert.ok(outputCode.indexOf(firstHtmlPart) === 0);
                 assert.ok(outputCode.indexOf(secondHtmlPart) !== -1);
-                assert.ok(outputCode.indexOf(inlineScriptContent) !== -1);
-                assert.ok(outputCode.indexOf(externalScriptContent) !== -1);
+                assert.ok(inlineScriptContentStart !== -1);
+                assert.ok(externalScriptContentStart !== -1);
+                assert.ok(inlineScriptContentStart < externalScriptContentStart);
             })
             .then(done)
             .catch(done);
