@@ -8,28 +8,54 @@ function isHtml(id) {
     return /\.html$/.test(id);
 }
 
+function buildInlineScriptId(htmlId, scriptIndex) {
+    return '\0' + htmlId + '-' + scriptIndex;
+}
+
 module.exports = function() {
     const doms = {};
+    const inlineScripts = {};
+    const inlineScriptHtmlMap = {};
 
-    function transformHtml(htmlContent) {
+    function addInlineScriptHtmlMap(htmlId, inlineScriptId) {
+        if (!inlineScriptHtmlMap[htmlId]) {
+            inlineScriptHtmlMap[htmlId] = [];
+        }
+        inlineScriptHtmlMap[htmlId].push(inlineScriptId);
+    }
+
+    function removeInlineScriptCache(htmlId) {
+        if (inlineScriptHtmlMap[htmlId]) {
+            inlineScriptHtmlMap[htmlId].forEach(inlineScriptId => {
+                delete inlineScripts[inlineScriptId];
+            });
+            inlineScriptHtmlMap[htmlId].length = 0;
+            delete inlineScriptHtmlMap[htmlId];
+        }  
+    }
+
+    function transformHtml(htmlId, htmlContent) {
         const dom = parseDOM(htmlContent);
         const scriptElements = domUtils.findAll(node => {
             return node.type === 'script' && node.name === 'script';
         }, dom);
-        const code = scriptElements.map(scriptElement => {
+        const code = scriptElements.map((scriptElement, scriptIndex) => {
             if (scriptElement.attribs.src) {
                 domUtils.removeElement(scriptElement);
-                return `import '${scriptElement.attribs.src}';\n`;
+                return `import '${scriptElement.attribs.src}';`;
             } else {
                 const firstChild = scriptElement.children[0];
                 if (firstChild && firstChild.type === 'text') {
                     domUtils.removeElement(scriptElement);
-                    return firstChild.data;
+                    const code = firstChild.data;
+                    const id = buildInlineScriptId(htmlId, scriptIndex);
+                    inlineScripts[id] = code;
+                    addInlineScriptHtmlMap(htmlId, id);
+                    return `import '${id}';`;
                 }
             }
             return '';
         }).join('');
-
         return {
             dom,
             code
@@ -37,8 +63,16 @@ module.exports = function() {
     }
 
     return {
+        resolveId(id) {
+            if (inlineScripts[id]) {
+                return id;
+            }
+        },
         load(id) {
             if (!isHtml(id)) {
+                if (inlineScripts[id]) {
+                    return inlineScripts[id];
+                }
                 return null;
             }
 
@@ -56,7 +90,7 @@ module.exports = function() {
                     }
                 });
             }).then(fileContent => {
-                const result = transformHtml(fileContent);
+                const result = transformHtml(id, fileContent);
                 cache[id] = result;
                 doms[id] = result.dom;
                 return result.code;
@@ -87,15 +121,17 @@ module.exports = function() {
                     return;
                 }
 
-                domUtils.appendChild(body, {
+                const scriptElement = {
                     type: 'script',
                     name: 'script',
                     children: [{
                         type: 'text',
                         data: bundle.code
                     }]
-                });
+                };
+                domUtils.appendChild(body, scriptElement);
                 bundle.code = domUtils.getOuterHTML(dom);
+                domUtils.removeElement(scriptElement);
                 bundle.fileName = path.parse(facadeModuleId).base;
                 delete outputBundle[bundleName];
                 outputBundle[bundle.fileName] = bundle;
@@ -103,7 +139,7 @@ module.exports = function() {
         },
 
         watchChange(id) {
-            const cacheData = cache[id];
+            let cacheData = cache[id];
             if (cacheData) {
                 delete cache[id];
                 Object.keys(cacheData).forEach(key => delete cacheData[key]);
@@ -112,6 +148,7 @@ module.exports = function() {
             if (doms[id]) {
                 delete doms[id];
             }
+            removeInlineScriptCache(id);
         }
     }
 }
