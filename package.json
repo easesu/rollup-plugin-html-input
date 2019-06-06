@@ -1,12 +1,20 @@
 {
   "name": "rollup-plugin-html-input",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Rollup plugin to use HTML files as input",
   "main": "index.js",
   "scripts": {
     "test": "mocha"
   },
   "author": "easesu <easesu@outlook.com>",
+  "repository": "easesu/rollup-plugin-html-input",
+  "keywords": [
+    "rollup-plugin"
+  ],
+  "bugs": {
+    "url": "https://github.com/easesu/rollup-plugin-html-input/issues"
+  },
+  "homepage": "https://github.com/easesu/rollup-plugin-html-input",
   "license": "GNU",
   "devDependencies": {
     "fs-extra": "^8.0.1",
